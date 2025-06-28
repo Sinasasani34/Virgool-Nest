@@ -25,7 +25,7 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-[Project](https://virgool.io/)see the project website
+[Project] (https://virgool.io/)see the project website
 
 ## Project setup
 
