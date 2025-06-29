@@ -1,6 +1,7 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { CookiePayload } from "./types/payload";
+import { AccessTokenPayload, CookiePayload } from "./types/payload";
+import { AuthMessage } from "src/common/enums/message.enum";
 
 @Injectable()
 export class TokenService {
@@ -15,5 +16,34 @@ export class TokenService {
         });
 
         return token;
+    }
+
+    verifyOtpToken(token: string): CookiePayload {
+        try {
+            return this.jwtService.verify(token, {
+                secret: process.env.OTP_TOKEN_SECRET,
+            });
+        } catch (error) {
+            throw new UnauthorizedException(AuthMessage.TryAgain)
+        }
+    }
+
+    createAccessToken(payload: AccessTokenPayload) {
+        const token = this.jwtService.sign(payload, {
+            secret: process.env.ACCESS_TOKEN_SECRET,
+            expiresIn: "1y"
+        });
+
+        return token;
+    }
+
+    verifyAccessToken(token: string): AccessTokenPayload {
+        try {
+            return this.jwtService.verify(token, {
+                secret: process.env.ACCESS_TOKEN_SECRET,
+            });
+        } catch (error) {
+            throw new UnauthorizedException(AuthMessage.LoginAgain)
+        }
     }
 }

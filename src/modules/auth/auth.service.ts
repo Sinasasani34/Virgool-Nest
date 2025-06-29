@@ -57,7 +57,7 @@ export class AuthService {
     async register(method: AuthMethod, username: string) {
         const validUsername = this.usernameValidator(method, username);
         let user: UserEntity | null = await this.checkExistUser(method, validUsername);
-        if (user) throw new ConflictException(AuthMessage.AlreadyExistAccount);
+        if (!user) throw new ConflictException(AuthMessage.AlreadyExistAccount);
         if (method === AuthMethod.Username) {
             throw new BadRequestException(BadRequestMessage.InValidRegisterData)
         }
@@ -117,7 +117,17 @@ export class AuthService {
     async checkOtp(code: string) {
         const token = this.request.cookies?.[CookieKeys.OTP];
         if (!token) throw new UnauthorizedException(AuthMessage.ExpiredCode);
-        return token;
+        const { userId } = this.tokenService.verifyOtpToken(token);
+        const otp = await this.otpRepository.findOneBy({ userId })
+        if (!otp) throw new UnauthorizedException(AuthMessage.LoginAgain);
+        const now = new Date();
+        if (otp.expiresIn < now) throw new UnauthorizedException(AuthMessage.ExpiredCode);
+        if (otp.code !== code) throw new UnauthorizedException(AuthMessage.TryAgain);
+        const accessToken = this.tokenService.createAccessToken({ userId });
+        return {
+            message: PublicMessage.LogedIn,
+            accessToken
+        }
     }
 
     async checkExistUser(method: AuthMethod, username: string) {
@@ -131,6 +141,13 @@ export class AuthService {
         } else {
             throw new BadRequestException(BadRequestMessage.InValidLoginData)
         }
+        return user;
+    }
+
+    async validateAccessToken(token: string) {
+        const { userId } = this.tokenService.verifyAccessToken(token);
+        const user = await this.userRepository.findOneBy({ id: userId });
+        if (!user) throw new UnauthorizedException(AuthMessage.LoginAgain);
         return user;
     }
 
@@ -148,6 +165,4 @@ export class AuthService {
                 throw new UnauthorizedException('اطلاعات وارد شده نادرست میباشد')
         }
     }
-
-
 }
