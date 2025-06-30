@@ -12,8 +12,15 @@ export enum AuthMessage {
 
 }
 export enum NotFoundMessage {
-
+    NotFound = "موردی یافت نشد",
+    NotFoundCategory = "دسته بندی یافت نشد",
+    NotFoundPost = "مقاله ای یافت نشد",
+    NotFoundUser = "کاربر مورد نظر یافت نشد",
 }
 export enum ValidationMessage {
 
+}
+
+export enum ConflictMessage {
+    CategoryTitle = "عنوان دسته بندی قبلا ثبت شده است",
 }
