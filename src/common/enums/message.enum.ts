@@ -18,7 +18,7 @@ export enum NotFoundMessage {
     NotFoundUser = "کاربر مورد نظر یافت نشد",
 }
 export enum ValidationMessage {
-
+    InvalidImageFormat = "فرمت تصویر آپلود شده نادرست مباشد(PNG, JPG, JPEG)"
 }
 
 export enum ConflictMessage {
