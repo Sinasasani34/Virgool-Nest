@@ -7,16 +7,25 @@ import { ProfileEntity } from "./profile.entity";
 @Entity(EntityNames.User)
 export class UserEntity extends BaseEntity {
     @Column({ unique: true, nullable: true })
-    username: string
+    username: string;
 
     @Column({ unique: true, nullable: true })
-    phone: string
+    phone: string;
 
     @Column({ unique: true, nullable: true })
-    email: string
+    email: string;
+
+    @Column({ unique: true, nullable: true })
+    new_email: string;
+
+    @Column({ nullable: true, default: false })
+    verify_email: boolean;
+
+    @Column({ nullable: true, default: false })
+    verify_phone: boolean;
 
     @Column({ nullable: true })
-    password: string
+    password: string;
 
     @Column({ nullable: true })
     otpId: number;
