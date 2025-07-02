@@ -107,7 +107,7 @@ export class UserService {
     async verifyEmail(code: string) {
         const { id: userId, new_email } = this.request.user as RequestUser;
 
-        const token = this.request.cookies?.[CookieKeys.OTP];
+        const token = this.request.cookies?.[CookieKeys.EmailOTP];
         if (!token) {
             throw new BadRequestException(AuthMessage.ExpiredCode);
         }
@@ -125,6 +125,55 @@ export class UserService {
             email,
             verify_email: true,
             new_email: undefined
+        });
+        return {
+            message: PublicMessage.Updated,
+            accessToken
+        }
+    }
+    async changePhone(phone: string) {
+        const { id } = this.request.user as RequestUser;
+        const user = await this.userRepository.findOneBy({ phone });
+
+        // user exist and update email in profile
+        if (user && user.id !== id) {
+            throw new ConflictException(ConflictMessage.Phone);
+        } else if (user && user.id == id) {
+            return {
+                message: PublicMessage.Updated
+            }
+        }
+
+        await this.userRepository.update({ id }, { new_phone: phone })
+        const otp = await this.authService.saveOtp(id, AuthMethod.Phone);
+        const token = this.tokenService.createPhoneToken({ phone });
+        return {
+            code: otp.code,
+            token
+        }
+    }
+
+    async verifyPhone(code: string) {
+        const { id: userId, new_phone } = this.request.user as RequestUser;
+
+        const token = this.request.cookies?.[CookieKeys.PhoneOTP];
+        if (!token) {
+            throw new BadRequestException(AuthMessage.ExpiredCode);
+        }
+        const { phone } = this.tokenService.verifyPhoneToken(token);
+        if (phone !== new_phone) {
+            throw new BadRequestException(BadRequestMessage.InvalidEmail)
+        }
+        const otp = await this.checkOtp(userId, code);
+        if (otp.method !== AuthMethod.Phone) {
+            throw new BadRequestException(BadRequestMessage.SomeThingWrong);
+        }
+
+        const accessToken = this.tokenService.createAccessToken({ userId });
+        await this.userRepository.update({ id: userId }, {
+            phone,
+            verify_phone: true,
+            new_phone: undefined
         });
         return {
             message: PublicMessage.Updated,

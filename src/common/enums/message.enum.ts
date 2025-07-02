@@ -27,5 +27,6 @@ export enum ValidationMessage {
 
 export enum ConflictMessage {
     CategoryTitle = "عنوان دسته بندی قبلا ثبت شده است",
-    Email = "ایمیل توسط شخص دیگری استفاده شده است"
+    Email = "ایمیل توسط شخص دیگری استفاده شده است",
+    Phone = "موبایل وارد شده نادرست است",
 }

@@ -18,6 +18,9 @@ export class UserEntity extends BaseEntity {
     @Column({ unique: true, nullable: true })
     new_email: string;
 
+    @Column({ unique: true, nullable: true })
+    new_phone: string;
+
     @Column({ nullable: true, default: false })
     verify_email: boolean;
 
