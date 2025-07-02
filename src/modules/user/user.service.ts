@@ -10,6 +10,7 @@ import { RequestUser } from './interface/Request.User';
 import { isDate } from 'class-validator';
 import { Gender } from './enum/gender.enum';
 import { ProfileImages } from './types/files';
+import { PublicMessage } from 'src/common/enums/message';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService {
@@ -33,7 +34,8 @@ export class UserService {
         let profile = await this.profileRepository.findOneBy({ userId });
         const { bio, brithday, gender, linkedin_profile, nick_name, x_profile, image_profile, bg_image } = profileDto;
         if (profile) {
-            if (bio) profile.bio = bio;
+            if (bio) profile.bio = nick_name;
+            if (nick_name) profile.nick_name = bio;
             if (brithday && isDate(new Date(brithday))) profile.brithday = new Date(brithday);
             if (gender && Object.values(Gender as any).includes(gender)) profile.gender = gender;
             if (linkedin_profile) profile.linkedin_profile = linkedin_profile;
@@ -42,11 +44,11 @@ export class UserService {
             if (bg_image) profile.bg_image = bg_image;
         } else {
             profile = this.profileRepository.create({
+                nick_name,
                 bio,
                 brithday,
                 gender,
                 linkedin_profile,
-                nick_name,
                 x_profile,
                 userId,
                 image_profile,
@@ -56,6 +58,10 @@ export class UserService {
         profile = await this.profileRepository.save(profile);
         if (!profileId) {
             await this.userRepository.update({ id: userId }, { profileId: profile.id })
+        }
+
+        return {
+            message: PublicMessage.Updated
         }
     }
 
