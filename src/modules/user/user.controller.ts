@@ -1,7 +1,7 @@
 import { Body, Controller, Get, ParseFilePipe, Patch, Post, Put, Res, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiBearerAuth, ApiConsumes, ApiTags } from '@nestjs/swagger';
-import { ChangeEmailDto, ChangePhoneDto, ProfileDto } from './dto/profile.dto';
+import { ChangeEmailDto, ChangePhoneDto, ChangeUsernameDto, ProfileDto } from './dto/profile.dto';
 import { SwaggerConsumes } from 'src/common/enums/swagger.consumes.enum';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -17,13 +17,13 @@ import { CheckOtpDto } from '../auth/dto/auth.dto';
 
 @Controller('user')
 @ApiTags("User")
+@ApiBearerAuth("Authorization")
+@UseGuards(AuthGuard)
 export class UserController {
   constructor(private readonly userService: UserService) { }
 
   @Put("/profile")
   @ApiConsumes(SwaggerConsumes.MultipartData)
-  @ApiBearerAuth("Authorization")
-  @UseGuards(AuthGuard)
   @UseInterceptors(FileFieldsInterceptor([
     { name: "image_profile", maxCount: 1 },
     { name: "bg_image", maxCount: 1 }
@@ -38,16 +38,12 @@ export class UserController {
   }
 
   @Get("/profile")
-  @ApiBearerAuth("Authorization")
-  @UseGuards(AuthGuard)
   profile() {
     return this.userService.profile();
   }
 
   @Patch("/change-email")
-  @ApiBearerAuth("Authorization")
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  @UseGuards(AuthGuard)
   async changeEmail(@Body() emailDto: ChangeEmailDto, @Res() res: Response) {
     const { code, token, message } = await this.userService.changeEmail(emailDto.email);
     if (message) return res.json({ message });
@@ -58,16 +54,12 @@ export class UserController {
     })
   }
   @Post("/verify-email-otp")
-  @ApiBearerAuth("Authorization")
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  @UseGuards(AuthGuard)
   async verifyEmail(@Body() otpDto: CheckOtpDto) {
     return this.userService.verifyEmail(otpDto.code);
   }
   @Patch("/change-phone")
-  @ApiBearerAuth("Authorization")
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  @UseGuards(AuthGuard)
   async changePhone(@Body() phoneDto: ChangePhoneDto, @Res() res: Response) {
     const { code, token, message } = await this.userService.changePhone(phoneDto.phone);
     if (message) return res.json({ message });
@@ -78,10 +70,16 @@ export class UserController {
     })
   }
   @Post("/verify-phone-otp")
-  @ApiBearerAuth("Authorization")
   @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
-  @UseGuards(AuthGuard)
   async verifyPhone(@Body() otpDto: CheckOtpDto) {
     return this.userService.verifyPhone(otpDto.code);
+  }
+
+  @Patch("/change-username")
+
+  @ApiConsumes(SwaggerConsumes.UrlEncoded, SwaggerConsumes.Json)
+
+  async changeUsername(@Body() usernameDto: ChangeUsernameDto) {
+    return this.userService.changeUsername(usernameDto.username);
   }
 }
