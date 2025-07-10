@@ -25,6 +25,12 @@ export class BlogEntity extends BaseEntity {
     slug: string;
 
     @Column()
+    time_for_study: string;
+
+    @Column({ default: BlogStatus.Draft })
+    status: string;
+
+    @Column()
     authorId: number;
 
     @ManyToOne(() => UserEntity, user => user.blogs, { onDelete: "CASCADE" })
@@ -38,9 +44,6 @@ export class BlogEntity extends BaseEntity {
 
     @OneToMany(() => BlogCommentEntity, comment => comment.blog)
     comments: BlogCommentEntity[];
-
-    @Column({ default: BlogStatus.Draft })
-    status: string;
 
     @CreateDateColumn()
     created_at: Date;
