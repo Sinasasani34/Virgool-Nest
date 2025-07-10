@@ -28,3 +28,7 @@ export class CreateBlogDto {
     @Length(100)
     content: string;
 }
+
+export class FilterBlogDto {
+    search: string;
+}
