@@ -28,6 +28,13 @@ export class CategoryService {
     }
   }
 
+  async insertByTitle(title: string) {
+    const category = this.categoryRepository.create({
+      title
+    });
+    return await this.categoryRepository.save(category);
+  }
+
   async checkExistAndResolveByTitle(title: string) {
     // بررسی کردن وجود تایتل های تکراری برای ایجاد دسته بندی
     title = title.trim()?.toLowerCase();
@@ -54,6 +61,9 @@ export class CategoryService {
     const category = await this.categoryRepository.findOneBy({ id });
     if (!category) throw new NotFoundException(NotFoundMessage.NotFoundCategory)
     return category;
+  }
+  async findOneByTitle(title: string) {
+    return await this.categoryRepository.findOneBy({ title });
   }
 
   async update(id: number, updateCategoryDto: UpdateCategoryDto) {

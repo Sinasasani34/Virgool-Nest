@@ -47,6 +47,7 @@ export class AuthService {
         const validUsername = this.usernameValidator(method, username);
         let user: UserEntity | null = await this.checkExistUser(method, validUsername);
         if (!user) throw new UnauthorizedException(AuthMessage.NotFoundAccount);
+
         const otp = await this.saveOtp(user.id, method);
         const token = this.tokenService.createOtpToken({ userId: user.id });
         return {
@@ -55,10 +56,11 @@ export class AuthService {
         }
     }
 
+
     async register(method: AuthMethod, username: string) {
         const validUsername = this.usernameValidator(method, username);
         let user: UserEntity | null = await this.checkExistUser(method, validUsername);
-        if (!user) throw new ConflictException(AuthMessage.AlreadyExistAccount);
+        if (user) throw new ConflictException(AuthMessage.AlreadyExistAccount);
         if (method === AuthMethod.Username) {
             throw new BadRequestException(BadRequestMessage.InValidRegisterData)
         }

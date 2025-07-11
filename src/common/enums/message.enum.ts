@@ -3,6 +3,7 @@ export enum BadRequestMessage {
     InValidRegisterData = "اطلاعات ارسال شده برای ثبت نام صحیح نمیباشد",
     SomeThingWrong = "خطایی پیش امده مجددا تلاش کنید",
     InvalidEmail = "ایمیل وارد شده نادرست میباشد",
+    InvalidCategories = "دسته بندی وارد شده نادرست میباشد",
 }
 export enum AuthMessage {
     NotFoundAccount = "حساب کاربری یافت نشد",

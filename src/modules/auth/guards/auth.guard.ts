@@ -32,6 +32,7 @@ export class AuthGuard implements CanActivate {
         if (bearer.toLowerCase() !== "bearer" || !token || !isJWT(token)) {
             throw new UnauthorizedException(AuthMessage.LoginIsRequired);
         }
+        // console.log("✅ AuthGuard executed");
         return token;
     }
 }

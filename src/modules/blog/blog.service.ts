@@ -1,4 +1,4 @@
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Scope } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './entities/blog.entity';
 import { Repository } from 'typeorm';
@@ -11,17 +11,29 @@ import { PublicMessage } from 'src/common/enums/message';
 import { RequestUser } from '../user/interface/Request.User';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { paginationGenerator, paginationSolver } from 'src/common/utils/pagination.util';
+import { isArray } from 'class-validator';
+import { CategoryService } from '../category/category.service';
+import { BlogCategoryEnitiy } from './entities/blog-category.entity';
+import { BadRequestMessage } from 'src/common/enums/message.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class BlogService {
     constructor(
         @InjectRepository(BlogEntity) private blogRepository: Repository<BlogEntity>,
-        @Inject(REQUEST) private request: Request
+        @InjectRepository(BlogCategoryEnitiy) private blogCategoryRepository: Repository<BlogCategoryEnitiy>,
+        @Inject(REQUEST) private request: Request,
+        private categoryService: CategoryService
     ) { }
 
     async create(blogDto: CreateBlogDto) {
         const user = this.request.user;
-        let { title, slug, content, description, image, time_for_study } = blogDto;
+        let { title, slug, content, description, image, time_for_study, categories } = blogDto;
+        if (!isArray(categories) && typeof categories === "string") {
+            categories = categories.split(",")
+        } else if (!isArray(categories)) {
+            throw new BadRequestException(BadRequestMessage.InvalidCategories)
+        }
+
         let slugData = slug ?? title;
         slug = createSlug(slugData);
         const isExist = await this.checkBlogBySlug(slug);
@@ -29,7 +41,7 @@ export class BlogService {
             // for setting unique slug => تست-اسلاگ-9238klsjdfkj
             slug += `-${randomId()}`;
         }
-        const blog = this.blogRepository.create({
+        let blog = this.blogRepository.create({
             title,
             slug,
             description,
@@ -39,7 +51,17 @@ export class BlogService {
             time_for_study,
             authorId: user?.id
         })
-        await this.blogRepository.save(blog);
+        blog = await this.blogRepository.save(blog);
+        for (const categoryTitle of categories) {
+            let category = await this.categoryService.findOneByTitle(categoryTitle);
+            if (!category) {
+                category = await this.categoryService.insertByTitle(categoryTitle)
+            }
+            await this.blogCategoryRepository.insert({
+                blogId: blog.id,
+                categoryId: category.id
+            });
+        }
         return {
             message: PublicMessage.Created
         }
