@@ -1,8 +1,8 @@
 import { BadRequestException, Inject, Injectable, Scope } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BlogEntity } from './entities/blog.entity';
-import { Repository } from 'typeorm';
-import { CreateBlogDto } from './dto/blog.dto';
+import { FindOptionsWhere, Repository } from 'typeorm';
+import { CreateBlogDto, FilterBlogDto } from './dto/blog.dto';
 import { createSlug, randomId } from 'src/common/utils/functions.util';
 import { BlogStatus } from './enum/status.enum';
 import { REQUEST } from '@nestjs/core';
@@ -15,6 +15,7 @@ import { isArray } from 'class-validator';
 import { CategoryService } from '../category/category.service';
 import { BlogCategoryEnitiy } from './entities/blog-category.entity';
 import { BadRequestMessage } from 'src/common/enums/message.enum';
+import { EntityNames } from 'src/common/enums/entity.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class BlogService {
@@ -78,16 +79,30 @@ export class BlogService {
             }
         })
     }
-    async blogList(paginationDto: PaginationDto) {
+
+    async blogList(paginationDto: PaginationDto, filterDto: FilterBlogDto) {
         const { limit, page, skip } = paginationSolver(paginationDto);
-        const [blogs, count] = await this.blogRepository.findAndCount({
-            where: {},
-            order: {
-                id: "DESC"  // مرتب سازی جدید ترین به قدیمی ترین
-            },
-            skip,
-            take: limit
-        });
+        let { category, search } = filterDto;
+        let where = '';
+        if (category) {
+            category = category.toLowerCase();
+            if (where.length > 0) where += ' AND ';
+            where += 'category.title = LOWER(:category)';
+        }
+        if (search) {
+            if (where.length > 0) where += ' AND ';
+            search = `%${search}%`;
+            where += 'CONCAT(blog.title, blog.description, blog.content) ILIKE :search';
+        }
+        const [blogs, count] = await this.blogRepository.createQueryBuilder(EntityNames.Blog)
+            .leftJoin("blog.categories", "categories")
+            .leftJoin("categories.category", "category")
+            .addSelect(['categories.id', 'category.title'])
+            .where(where, { category, search })
+            .orderBy("blog.id", 'DESC')
+            .skip(skip)
+            .take(limit)
+            .getManyAndCount()
         return {
             pagination: paginationGenerator(count, page, limit),
             blogs
