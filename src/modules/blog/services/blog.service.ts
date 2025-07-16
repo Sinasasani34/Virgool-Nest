@@ -1,22 +1,24 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { BlogEntity } from './entities/blog.entity';
+import { BlogEntity } from '../entities/blog.entity';
 import { FindOptionsWhere, Repository } from 'typeorm';
-import { CreateBlogDto, FilterBlogDto, UpdateBlogDto } from './dto/blog.dto';
+import { CreateBlogDto, FilterBlogDto, UpdateBlogDto } from '../dto/blog.dto';
 import { createSlug, randomId } from 'src/common/utils/functions.util';
-import { BlogStatus } from './enum/status.enum';
+import { BlogStatus } from '../enum/status.enum';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { PublicMessage } from 'src/common/enums/message';
-import { RequestUser } from '../user/interface/Request.User';
+import { RequestUser } from '../../user/interface/Request.User';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { paginationGenerator, paginationSolver } from 'src/common/utils/pagination.util';
 import { isArray } from 'class-validator';
-import { CategoryService } from '../category/category.service';
-import { BlogCategoryEnitiy } from './entities/blog-category.entity';
+import { CategoryService } from '../../category/category.service';
+import { BlogCategoryEnitiy } from '../entities/blog-category.entity';
 import { BadRequestMessage, NotFoundMessage } from 'src/common/enums/message.enum';
 import { EntityNames } from 'src/common/enums/entity.enum';
-import { BlogLikesEntity } from './entities/like.entity';
+import { BlogLikesEntity } from '../entities/like.entity';
+import { BlogBookmarkEntity } from '../entities/bookmark.entity';
+import { CreateCommentDto } from '../dto/comment.dto';
 
 @Injectable({ scope: Scope.REQUEST })
 export class BlogService {
@@ -24,6 +26,7 @@ export class BlogService {
         @InjectRepository(BlogEntity) private blogRepository: Repository<BlogEntity>,
         @InjectRepository(BlogCategoryEnitiy) private blogCategoryRepository: Repository<BlogCategoryEnitiy>,
         @InjectRepository(BlogLikesEntity) private blogLikeRepository: Repository<BlogLikesEntity>,
+        @InjectRepository(BlogBookmarkEntity) private blogBookmarkRepository: Repository<BlogBookmarkEntity>,
         @Inject(REQUEST) private request: Request,
         private categoryService: CategoryService
     ) { }
@@ -99,8 +102,12 @@ export class BlogService {
         const [blogs, count] = await this.blogRepository.createQueryBuilder(EntityNames.Blog)
             .leftJoin("blog.categories", "categories")
             .leftJoin("categories.category", "category")
-            .addSelect(['categories.id', 'category.title'])
+            .leftJoin("blog.author", "author")
+            .leftJoin("author.profile", "profile")
+            .addSelect(['categories.id', 'category.title', "author.username", 'author.id', 'profile.nick_name'])
             .where(where, { category, search })
+            .loadRelationCountAndMap("blog.likes", "blog.likes")
+            .loadRelationCountAndMap("blog.bookmarks", "blog.bookmarks")
             .orderBy("blog.id", 'DESC')
             .skip(skip)
             .take(limit)
@@ -188,6 +195,25 @@ export class BlogService {
             message = PublicMessage.DisLiked;
         } else {
             await this.blogLikeRepository.insert({
+                blogId,
+                userId
+            })
+        }
+        return {
+            message
+        }
+    }
+
+    async bookmarkToggle(blogId: number) {
+        const { id: userId } = this.request.user as RequestUser;
+        const blog = await this.checkExistBlogById(blogId);
+        const isBookmarked = await this.blogBookmarkRepository.findOneBy({ userId, blogId });
+        let message = PublicMessage.AddToBookmarks;
+        if (isBookmarked) {
+            await this.blogBookmarkRepository.delete({ id: isBookmarked.id });
+            message = PublicMessage.RemoveFromBookmarks;
+        } else {
+            await this.blogBookmarkRepository.insert({
                 blogId,
                 userId
             })

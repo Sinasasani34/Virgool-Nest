@@ -7,4 +7,6 @@ export enum PublicMessage {
     Inserted = "با موفقیت اضافه شد",
     Liked = "مقاله به علاقهمندی ها پیوست",
     DisLiked = "مقاله از علاقهمندی ها پاک شد",
+    AddToBookmarks = "مقاله ذخیره شد",
+    RemoveFromBookmarks = "مقاله از لیست ذخیره ها پاک شد",
 }

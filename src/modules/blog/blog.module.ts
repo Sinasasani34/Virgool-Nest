@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { BlogService } from './blog.service';
-import { BlogController } from './blog.controller';
+import { BlogService } from './services/blog.service';
+import { BlogController } from './controllers/blog.controller';
 import { AuthModule } from '../auth/auth.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { BlogEntity } from './entities/blog.entity';
@@ -8,14 +8,19 @@ import { CategoryService } from '../category/category.service';
 import { CategoryEntity } from '../category/entities/category.entity';
 import { BlogCategoryEnitiy } from './entities/blog-category.entity';
 import { BlogLikesEntity } from './entities/like.entity';
+import { BlogBookmarkEntity } from './entities/bookmark.entity';
+import { BlogCommentService } from './services/comment.service';
+import { BlogCommentEntity } from './entities/comment.entity';
 
 @Module({
   imports: [AuthModule, TypeOrmModule.forFeature([BlogEntity,
     CategoryEntity,
     BlogCategoryEnitiy,
-    BlogLikesEntity
+    BlogLikesEntity,
+    BlogBookmarkEntity,
+    BlogCommentEntity
   ])],
   controllers: [BlogController],
-  providers: [BlogService, CategoryService],
+  providers: [BlogService, CategoryService, BlogCommentService],
 })
 export class BlogModule { }
