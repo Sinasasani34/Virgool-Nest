@@ -43,4 +43,9 @@ export class BlogController {
   update(@Param("id", ParseIntPipe) id: number, @Body() blogDto: UpdateBlogDto) {
     return this.blogService.update(id, blogDto)
   }
+
+  @Get("/like/:id")
+  likeToggle(@Param("id", ParseIntPipe) id: number) {
+    return this.blogService.likeToggle(id)
+  }
 }

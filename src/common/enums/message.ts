@@ -5,4 +5,6 @@ export enum PublicMessage {
     Deleted = "با موفقیت حذف شد",
     Updated = "با موفقیت بروزرسانی شد",
     Inserted = "با موفقیت اضافه شد",
+    Liked = "مقاله به علاقهمندی ها پیوست",
+    DisLiked = "مقاله از علاقهمندی ها پاک شد",
 }
