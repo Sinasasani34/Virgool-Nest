@@ -19,10 +19,15 @@ export class BlogCommentService {
     ) { }
 
     async createComment(commentDto: CreateCommentDto) {
-        const { parentId, text } = commentDto;
+        const { parentId, text, blogId } = commentDto;
         let parent: BlogCommentEntity | null = null;
         if (parentId && !isNaN(parentId)) {
             parent = await this.blogCommentRepository.findOneBy({ id: +parentId });
         }
+        await this.blogCommentRepository.create({
+            text,
+            accepted: true,
+            blogId
+        })
     }
 }
