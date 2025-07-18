@@ -4,6 +4,8 @@ export enum BadRequestMessage {
     SomeThingWrong = "خطایی پیش امده مجددا تلاش کنید",
     InvalidEmail = "ایمیل وارد شده نادرست میباشد",
     InvalidCategories = "دسته بندی وارد شده نادرست میباشد",
+    AlreadyAccepted = "این کامنت از قبل تایید شده است",
+    AlreadyRejected = "این کامنت از قبل رد شده است",
 }
 export enum AuthMessage {
     NotFoundAccount = "حساب کاربری یافت نشد",

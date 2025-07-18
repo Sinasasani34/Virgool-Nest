@@ -4,7 +4,7 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { CategoryService } from '../../category/category.service';
 import { CreateCommentDto } from '../dto/comment.dto';
-import { Inject, Injectable, Scope } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { BlogCommentEntity } from '../entities/comment.entity';
 import { BlogService } from './blog.service';
@@ -12,6 +12,7 @@ import { RequestUser } from 'src/modules/user/interface/Request.User';
 import { PublicMessage } from 'src/common/enums/message';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
 import { paginationGenerator, paginationSolver } from 'src/common/utils/pagination.util';
+import { BadRequestMessage, NotFoundMessage } from 'src/common/enums/message.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class BlogCommentService {
@@ -65,6 +66,36 @@ export class BlogCommentService {
         return {
             pagination: paginationGenerator(count, page, limit),
             comments
+        }
+    }
+
+    async checkExistById(id: number) {
+        const comment = await this.blogCommentRepository.findOneBy({ id });
+        if (!comment) throw new NotFoundException(NotFoundMessage.NotFound);
+        return comment;
+    }
+
+    async accept(id: number) {
+        const comment = await this.checkExistById(id);
+        if (comment.accepted) {
+            throw new BadRequestException(BadRequestMessage.AlreadyAccepted);
+        }
+        comment.accepted = true;
+        await this.blogCommentRepository.save(comment);
+        return {
+            message: PublicMessage.Updated
+        }
+    }
+
+    async reject(id: number) {
+        const comment = await this.checkExistById(id);
+        if (!comment.accepted) {
+            throw new BadRequestException(BadRequestMessage.AlreadyRejected);
+        }
+        comment.accepted = false;
+        await this.blogCommentRepository.save(comment);
+        return {
+            message: PublicMessage.Updated
         }
     }
 }
