@@ -4,8 +4,8 @@ import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { CategoryService } from '../../category/category.service';
 import { CreateCommentDto } from '../dto/comment.dto';
-import { BadRequestException, Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException, Scope } from '@nestjs/common';
+import { IsNull, Repository } from 'typeorm';
 import { BlogCommentEntity } from '../entities/comment.entity';
 import { BlogService } from './blog.service';
 import { RequestUser } from 'src/modules/user/interface/Request.User';
@@ -20,7 +20,7 @@ export class BlogCommentService {
         @InjectRepository(BlogEntity) private blogRepository: Repository<BlogEntity>,
         @InjectRepository(BlogCommentEntity) private blogCommentRepository: Repository<BlogCommentEntity>,
         @Inject(REQUEST) private request: Request,
-        private blogService: BlogService
+        @Inject(forwardRef(() => BlogService)) private blogService: BlogService
     ) { }
 
     async create(commentDto: CreateCommentDto) {
@@ -57,6 +57,56 @@ export class BlogCommentService {
                 },
                 user: {
                     username: true,
+                }
+            },
+            skip,
+            take: limit,
+            order: { id: 'DESC' }
+        });
+        return {
+            pagination: paginationGenerator(count, page, limit),
+            comments
+        }
+    }
+
+    async findCommentsOfBlog(blogId: number, paginationDto: PaginationDto) {
+        const { limit, page, skip } = paginationSolver(paginationDto);
+        const [comments, count] = await this.blogCommentRepository.findAndCount({
+            where: {
+                blogId,
+                parentId: IsNull()
+            },
+            relations: {
+                user: { profile: true },
+                children: {
+                    user: { profile: true },
+                    children: {
+                        user: { profile: true },
+                    }
+                }
+            },
+            select: {
+                blog: {
+                    title: true
+                },
+                user: {
+                    username: true,
+                },
+                children: {
+                    parentId: true,
+                    text: true,
+                    created_at: true,
+                    user: {
+                        username: true,
+                    },
+                    children: {
+                        text: true,
+                        created_at: true,
+                        parentId: true,
+                        user: {
+                            username: true,
+                        },
+                    }
                 }
             },
             skip,
