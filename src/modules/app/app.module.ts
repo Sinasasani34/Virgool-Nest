@@ -7,6 +7,7 @@ import { UserModule } from '../user/user.module';
 import { AuthModule } from '../auth/auth.module';
 import { CategoryModule } from '../category/category.module';
 import { BlogModule } from '../blog/blog.module';
+import { ImageModule } from '../image/image.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -17,7 +18,8 @@ import { BlogModule } from '../blog/blog.module';
     AuthModule,
     UserModule,
     CategoryModule,
-    BlogModule
+    BlogModule,
+    ImageModule
   ],
   controllers: [],
   providers: [],
