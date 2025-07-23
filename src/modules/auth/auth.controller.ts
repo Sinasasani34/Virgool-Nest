@@ -6,6 +6,9 @@ import { SwaggerConsumes } from 'src/common/enums/swagger.consumes.enum';
 import { Request, Response } from 'express';
 import { CookieKeys } from 'src/common/enums/cookie.enum';
 import { AuthGuard } from './guards/auth.guard';
+import { AuthDecorator } from 'src/common/decorators/Auth.decorator';
+import { CanAccess } from 'src/common/decorators/role.decorator';
+import { Roles } from 'src/common/enums/role.enum';
 
 @Controller('auth')
 @ApiTags("Auth")
@@ -24,8 +27,8 @@ export class AuthController {
   }
 
   @Get('check-login')
-  @ApiBearerAuth("Authorization")
-  @UseGuards(AuthGuard)
+  @AuthDecorator()
+  @CanAccess(Roles.Admin, Roles.User)
   checkLogin(@Req() req: Request) {
     return { user: req.user };
   }
