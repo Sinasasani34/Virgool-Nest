@@ -18,6 +18,7 @@ import { CookieKeys } from 'src/common/enums/cookie.enum';
 import { AuthResponse } from './types/response'
 import { REQUEST } from '@nestjs/core';
 import { CookiesOptionsToken } from 'src/common/utils/cookie.util';
+import { KavenegarService } from '../http/kavenegar.service';
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
     constructor(
@@ -25,7 +26,8 @@ export class AuthService {
         @InjectRepository(ProfileEntity) private profileRepository: Repository<ProfileEntity>,
         @InjectRepository(OtpEntity) private otpRepository: Repository<OtpEntity>,
         @Inject(REQUEST) private request: Request,
-        private tokenService: TokenService
+        private tokenService: TokenService,
+        private kavenegarService: KavenegarService
     ) { }
 
     async userExistence(authDto: AuthDto, res: Response) {
@@ -34,9 +36,11 @@ export class AuthService {
         switch (type) {
             case AuthType.Login:
                 result = await this.login(method, username);
+                // await this.sendOtp(method, username, result.code)
                 return this.sendResponse(res, result)
             case AuthType.Register:
                 result = await this.register(method, username);
+                // await this.sendOtp(method, username, result.code)
                 return this.sendResponse(res, result)
             default:
                 throw new UnauthorizedException('')
@@ -52,7 +56,9 @@ export class AuthService {
         const token = this.tokenService.createOtpToken({ userId: user.id });
         return {
             token,
-            code: otp.code
+            code: otp.code,
+            // mobile: method == AuthMethod.Phone : user.phone,
+            method
         }
     }
 
@@ -77,6 +83,14 @@ export class AuthService {
         return {
             token,
             code: otp.code
+        }
+    }
+
+    async sendOtp(method: AuthMethod, username: string, code: string) {
+        if (method == AuthMethod.Email) {
+            console.log("send Email");
+        } else if (method == AuthMethod.Phone) {
+            await this.kavenegarService.sendVerificationSms(username, code);
         }
     }
 

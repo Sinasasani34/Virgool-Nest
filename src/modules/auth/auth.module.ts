@@ -8,9 +8,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from '../user/entities/user.entity';
 import { OtpEntity } from '../user/entities/otp.entity';
 import { ProfileEntity } from '../user/entities/profile.entity';
+import { CustomHttpModule } from '../http/http.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity, OtpEntity, ProfileEntity])],
+  imports: [CustomHttpModule, TypeOrmModule.forFeature([UserEntity, OtpEntity, ProfileEntity])],
   controllers: [AuthController],
   providers: [AuthService, JwtService, TokenService],
   exports: [AuthService, JwtService, TokenService, TypeOrmModule],
