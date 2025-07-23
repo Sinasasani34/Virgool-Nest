@@ -28,7 +28,6 @@ export class AuthController {
 
   @Get('check-login')
   @AuthDecorator()
-  @CanAccess(Roles.Admin, Roles.User)
   checkLogin(@Req() req: Request) {
     return { user: req.user };
   }
