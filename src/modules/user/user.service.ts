@@ -17,6 +17,8 @@ import { AuthService } from '../auth/auth.service';
 import { TokenService } from '../auth/tokens.service';
 import { AuthMethod } from '../auth/enums/method.enum';
 import { CookieKeys } from 'src/common/enums/cookie.enum';
+import { FollowEntity } from './entities/follow.entity';
+import { EntityNames } from 'src/common/enums/entity.enum';
 
 @Injectable({ scope: Scope.REQUEST })
 export class UserService {
@@ -24,9 +26,10 @@ export class UserService {
         @InjectRepository(UserEntity) private userRepository: Repository<UserEntity>,
         @InjectRepository(ProfileEntity) private profileRepository: Repository<ProfileEntity>,
         @InjectRepository(OtpEntity) private otpRepository: Repository<OtpEntity>,
+        @InjectRepository(FollowEntity) private followRepository: Repository<FollowEntity>,
         @Inject(REQUEST) private request: Request,
         private authService: AuthService,
-        private tokenService: TokenService
+        private tokenService: TokenService,
     ) { }
 
     async changeProfile(files: ProfileImages, profileDto: ProfileDto) {
@@ -76,10 +79,12 @@ export class UserService {
 
     profile() {
         const { id } = this.request.user as RequestUser;
-        return this.userRepository.findOne({
-            where: { id },
-            relations: ['profile']
-        })
+        return this.userRepository.createQueryBuilder(EntityNames.User)
+            .where({ id })
+            .leftJoinAndSelect("user.profile", "profile")
+            .loadRelationCountAndMap("user.followers", "user.followers")
+            .loadRelationCountAndMap("user.following", "user.following")
+            .getOne();
     }
 
     async changeEmail(email: string) {
@@ -131,6 +136,7 @@ export class UserService {
             accessToken
         }
     }
+
     async changePhone(phone: string) {
         const { id } = this.request.user as RequestUser;
         const user = await this.userRepository.findOneBy({ phone });
@@ -204,5 +210,31 @@ export class UserService {
         if (otp.expiresIn < now) throw new BadRequestException(AuthMessage.ExpiredCode);
         if (otp.code !== code) throw new BadRequestException(AuthMessage.TryAgain);
         return otp;
+    }
+
+    async find() {
+        return this.userRepository.find({
+            where: {}
+        })
+    }
+
+    async followToggel(followingId: number) {
+        const { id: userId } = this.request.user as RequestUser;
+
+        const following = await this.userRepository.findOneBy({ id: followingId });
+        if (!following) throw new NotFoundException(NotFoundMessage.NotFoundUser);
+
+        const isFollowing = await this.followRepository.findOneBy({ followingId, followerId: userId });
+        let message = PublicMessage.Followed;
+        if (isFollowing) {
+            message = PublicMessage.Unfollowed;
+            await this.followRepository.remove(isFollowing);
+        } else {
+            await this.followRepository.insert({ followingId, followerId: userId });
+        }
+
+        return {
+            message
+        }
     }
 }

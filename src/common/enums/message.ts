@@ -11,4 +11,6 @@ export enum PublicMessage {
     RemoveFromBookmarks = "مقاله از لیست ذخیره ها پاک شد",
     CommentCreated = "نظر شما با موفقیت ثبت شد",
     RemoveComment = "نظر شما با موفقیت حذف شد",
+    Followed = "كاربر با موفقيت دنبال شد",
+    Unfollowed = "شما اين كاربر را فالو نميكنيد",
 }
